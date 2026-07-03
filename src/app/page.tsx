@@ -167,7 +167,6 @@ export default function DashboardPage() {
     { label: "Pending", value: metrics.pending.toLocaleString(), color: "bg-red-500", icon: BarChartIcon },
     { label: "Approved Loans", value: metrics.approved.toLocaleString(), color: "bg-orange-500", icon: PieChartIcon },
     { label: "Declined Loans", value: metrics.declined.toLocaleString(), color: "bg-pink-500", icon: UsersIcon },
-    { label: "Total Disbursed", value: compactCurrency(metrics.disbursed), color: "bg-emerald-500", icon: WalletIcon },
   ];
 
   const donutSegments = [
@@ -271,65 +270,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
-            <div className="flex items-center justify-between px-6 py-4">
-              <div>
-                <h2 className="text-base font-bold text-slate-800">
-                  Recent Applications
-                </h2>
-                <p className="text-xs text-slate-400">Latest loan requests</p>
-              </div>
-              <a
-                href="/personal-loans"
-                className="rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-600"
-              >
-                View all
-              </a>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
-                <thead>
-                  <tr className="border-y border-slate-100 bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
-                    <th className="px-6 py-3 font-semibold">Full name</th>
-                    <th className="px-6 py-3 font-semibold">Ref No</th>
-                    <th className="px-6 py-3 font-semibold">Loan Amount</th>
-                    <th className="px-6 py-3 font-semibold">Monthly</th>
-                    <th className="px-6 py-3 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {metrics.recent.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
-                        No applications yet.
-                      </td>
-                    </tr>
-                  ) : (
-                    metrics.recent.map((loan) => (
-                      <tr
-                        key={loan.id ?? loan.refNo}
-                        className="border-b border-slate-50 text-slate-700 hover:bg-slate-50"
-                      >
-                        <td className="px-6 py-3 font-medium text-slate-800">
-                          {loan.fullName}
-                        </td>
-                        <td className="px-6 py-3">{loan.refNo}</td>
-                        <td className="px-6 py-3">{currency(loan.loanAmount)}</td>
-                        <td className="px-6 py-3">{currency(loan.monthlyRepayment)}</td>
-                        <td className="px-6 py-3">
-                          <span
-                            className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusStyles[loan.status]}`}
-                          >
-                            {loan.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
       )}
     </div>
