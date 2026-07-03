@@ -33,7 +33,13 @@ function YesNo({ value, danger }: { value: boolean; danger?: boolean }) {
   );
 }
 
-export default function LoansTable({ loans }: { loans: PersonalLoan[] }) {
+export default function LoansTable({
+  loans,
+  showActions = true,
+}: {
+  loans: PersonalLoan[];
+  showActions?: boolean;
+}) {
   const [page, setPage] = useState(1);
 
   const totalPages = Math.max(1, Math.ceil(loans.length / PAGE_SIZE));
@@ -69,7 +75,9 @@ export default function LoansTable({ loans }: { loans: PersonalLoan[] }) {
               <th className="whitespace-nowrap px-4 py-3 font-semibold">Monthly repayments</th>
               <th className="whitespace-nowrap px-4 py-3 font-semibold">Repayment Method</th>
               <th className="whitespace-nowrap px-4 py-3 font-semibold">Status</th>
-              <th className="whitespace-nowrap px-4 py-3 font-semibold">Action</th>
+              {showActions && (
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">Action</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -105,16 +113,18 @@ export default function LoansTable({ loans }: { loans: PersonalLoan[] }) {
                     {loan.status}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <div className="flex gap-2">
-                    <button className="rounded bg-sky-500 px-3 py-1 text-[12px] font-semibold text-white hover:bg-sky-600">
-                      View
-                    </button>
-                    <button className="rounded bg-slate-100 px-3 py-1 text-[12px] font-semibold text-slate-600 hover:bg-slate-200">
-                      Edit
-                    </button>
-                  </div>
-                </td>
+                {showActions && (
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <div className="flex gap-2">
+                      <button className="rounded bg-sky-500 px-3 py-1 text-[12px] font-semibold text-white hover:bg-sky-600">
+                        View
+                      </button>
+                      <button className="rounded bg-slate-100 px-3 py-1 text-[12px] font-semibold text-slate-600 hover:bg-slate-200">
+                        Edit
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
