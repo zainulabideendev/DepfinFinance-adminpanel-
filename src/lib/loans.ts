@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   collection,
+  deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
   query,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -181,6 +184,43 @@ export async function updateLoanStatus(
   await updateDoc(doc(firestore, loan.node, loan.id), {
     status: status.toLowerCase(),
   });
+}
+
+const DECISION_NODE: Record<"Approved" | "Declined", string> = {
+  Approved: "Approved loans",
+  Declined: "Declined loans",
+};
+
+// Move a loan into the "Approved loans" / "Declined loans" collection and
+// remove it from its original collection (keeps counts consistent).
+export async function moveLoanToDecision(
+  loan: PersonalLoan,
+  decision: "Approved" | "Declined"
+): Promise<void> {
+  if (!loan.node || !loan.id) return;
+
+  const targetNode = DECISION_NODE[decision];
+  if (loan.node === targetNode) {
+    // Already in the destination collection; just update the status field.
+    await updateDoc(doc(firestore, loan.node, loan.id), {
+      status: decision.toLowerCase(),
+    });
+    return;
+  }
+
+  const srcRef = doc(firestore, loan.node, loan.id);
+  const snap = await getDoc(srcRef);
+  const data = (snap.exists() ? snap.data() : {}) as RawLoan;
+
+  await setDoc(doc(firestore, targetNode, loan.id), {
+    ...data,
+    status: decision.toLowerCase(),
+    // Preserve where it came from so the original type is still known.
+    loan_type: data.loan_type ?? loan.loanType ?? "",
+    original_collection: loan.node,
+  });
+
+  await deleteDoc(srcRef);
 }
 
 export function useLoans(nodes: readonly string[] = []) {

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import LoansTable from "../personal-loans/LoansTable";
 import type { LoanStatus, PersonalLoan } from "../personal-loans/data";
-import { searchLoans, updateLoanStatus, useLoans } from "@/lib/loans";
+import { moveLoanToDecision, useLoans, searchLoans } from "@/lib/loans";
 
 export default function LoansView({
   title,
@@ -20,6 +20,7 @@ export default function LoansView({
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<PersonalLoan[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const nodesKey = nodes.join("|");
@@ -55,15 +56,27 @@ export default function LoansView({
   }, [term, nodesKey]);
 
   const handleDecision = async (loan: PersonalLoan, decision: LoanStatus) => {
+    if (decision !== "Approved" && decision !== "Declined") return;
+    const key = loan.id ?? loan.refNo;
+    // Optimistically remove the moved row from this view.
+    setRemovedKeys((prev) => new Set(prev).add(key));
     try {
-      await updateLoanStatus(loan, decision);
+      await moveLoanToDecision(loan, decision);
     } catch {
-      // Keep the optimistic UI update.
+      // Roll back if the move failed.
+      setRemovedKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
     }
   };
 
   const isSearchMode = term.trim().length > 0;
-  const displayed = isSearchMode ? results ?? [] : loans;
+  const baseList = isSearchMode ? results ?? [] : loans;
+  const displayed = baseList.filter(
+    (l) => !removedKeys.has(l.id ?? l.refNo)
+  );
   const showLoading = isSearchMode ? searching : loading;
   const activeError = isSearchMode ? searchError : error;
 
