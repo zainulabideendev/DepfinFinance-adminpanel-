@@ -16,3 +16,15 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Hide scrollbars while keeping scroll functionality */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / old Edge */
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome / Edge / Safari */
+}
