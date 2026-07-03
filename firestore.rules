@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // A signed-in user can read their own users document (needed for the
+    // role check at login). Admins can read/write any user.
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAdmin();
+    }
+
+    // Loan collections — readable/writable by admins only.
+    match /{collection}/{docId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

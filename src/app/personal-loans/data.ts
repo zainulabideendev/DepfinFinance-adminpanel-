@@ -16,6 +16,11 @@ export type PersonalLoan = {
   monthlyRepayment: number;
   repaymentMethod: string;
   status: LoanStatus;
+  // Present when the record comes from Firebase (used to persist updates).
+  id?: string;
+  node?: string;
+  loanType?: string;
+  dateCreated?: string;
 };
 
 const firstNames = [
