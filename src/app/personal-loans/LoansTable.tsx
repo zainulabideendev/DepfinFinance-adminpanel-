@@ -162,7 +162,6 @@ export default function LoansTable({
   onDecision?: (loan: PersonalLoan, decision: LoanStatus) => void | Promise<void>;
 }) {
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
   const [statusOverrides, setStatusOverrides] = useState<
     Record<string, LoanStatus>
   >({});
@@ -173,46 +172,19 @@ export default function LoansTable({
   const statusFor = (loan: PersonalLoan): LoanStatus =>
     statusOverrides[keyFor(loan)] ?? loan.status;
 
-  const filteredLoans = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return loans;
-    return loans.filter((l) =>
-      [
-        l.fullName,
-        l.refNo,
-        l.idNumber,
-        l.phoneNumber,
-        l.email,
-        l.employmentStatus,
-        l.repaymentMethod,
-        l.loanType ?? "",
-        statusFor(l),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loans, search, statusOverrides]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredLoans.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(loans.length / PAGE_SIZE));
 
   const currentPage = Math.min(page, totalPages);
 
   const pageRows = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredLoans.slice(start, start + PAGE_SIZE);
-  }, [filteredLoans, currentPage]);
+    return loans.slice(start, start + PAGE_SIZE);
+  }, [loans, currentPage]);
 
-  const firstItem = filteredLoans.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const lastItem = Math.min(currentPage * PAGE_SIZE, filteredLoans.length);
+  const firstItem = loans.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const lastItem = Math.min(currentPage * PAGE_SIZE, loans.length);
 
   const goTo = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    setPage(1);
-  };
 
   const handleDecision = (decision: LoanStatus) => {
     if (!selected) return;
@@ -224,39 +196,6 @@ export default function LoansTable({
 
   return (
     <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-        <div className="relative w-full max-w-sm">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </span>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search name, ref, ID, phone, email…"
-            className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-8 text-[13px] text-slate-800 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-          />
-          {search && (
-            <button
-              onClick={() => handleSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              aria-label="Clear search"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )}
-        </div>
-        <span className="hidden shrink-0 text-[13px] text-slate-400 sm:block">
-          {filteredLoans.length} result{filteredLoans.length === 1 ? "" : "s"}
-        </span>
-      </div>
-
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1600px] border-collapse text-left text-[13px]">
           <thead>
@@ -288,7 +227,7 @@ export default function LoansTable({
                   colSpan={showActions ? 16 : 15}
                   className="px-4 py-12 text-center text-slate-400"
                 >
-                  No results found{search ? ` for “${search}”` : ""}.
+                  No records to show.
                 </td>
               </tr>
             )}
@@ -342,7 +281,7 @@ export default function LoansTable({
 
       <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-[13px] text-slate-500 sm:flex-row">
         <span>
-          Showing {firstItem}–{lastItem} of {filteredLoans.length}
+          Showing {firstItem}–{lastItem} of {loans.length}
         </span>
         <div className="flex items-center gap-1">
           <button

@@ -1,7 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { firestore } from "./firebase";
 import type { LoanStatus, PersonalLoan } from "@/app/personal-loans/data";
 
@@ -95,6 +104,73 @@ export async function fetchLoans(nodes: readonly string[]): Promise<PersonalLoan
   return results
     .flat()
     .sort((a, b) => dateValue(b.dateCreated) - dateValue(a.dateCreated));
+}
+
+// Firestore fields we run prefix searches against.
+const SEARCH_FIELDS = [
+  "ref_no",
+  "email",
+  "ID_number",
+  "phone_number",
+  "first_name",
+  "last_name",
+] as const;
+
+// Firestore is case-sensitive; try a few casings of the term.
+function termVariants(term: string): string[] {
+  const t = term.trim();
+  if (!t) return [];
+  const capitalized = t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+  return Array.from(new Set([t, t.toLowerCase(), t.toUpperCase(), capitalized]));
+}
+
+// Prefix search across the given collections. Firestore can only match the
+// START of a field (no substring search), so this matches values beginning
+// with the search term.
+export async function searchLoans(
+  nodes: readonly string[],
+  term: string,
+  perQueryLimit = 20
+): Promise<PersonalLoan[]> {
+  const variants = termVariants(term);
+  if (variants.length === 0) return [];
+
+  const seen = new Map<string, PersonalLoan>();
+  const tasks: Promise<void>[] = [];
+
+  for (const node of nodes) {
+    for (const field of SEARCH_FIELDS) {
+      for (const v of variants) {
+        tasks.push(
+          (async () => {
+            try {
+              const qy = query(
+                collection(firestore, node),
+                orderBy(field),
+                where(field, ">=", v),
+                where(field, "<=", `${v}\uf8ff`),
+                limit(perQueryLimit)
+              );
+              const snap = await getDocs(qy);
+              snap.docs.forEach((d) => {
+                const key = `${node}/${d.id}`;
+                if (!seen.has(key)) {
+                  seen.set(key, mapRecord(d.id, node, (d.data() as RawLoan) ?? {}));
+                }
+              });
+            } catch {
+              // Ignore fields that don't exist / missing indexes for this node.
+            }
+          })()
+        );
+      }
+    }
+  }
+
+  await Promise.all(tasks);
+  return Array.from(seen.values()).sort(
+    (a, b) => dateValue(b.dateCreated) - dateValue(a.dateCreated)
+  );
 }
 
 export async function updateLoanStatus(
