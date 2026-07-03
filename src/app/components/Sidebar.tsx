@@ -64,7 +64,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
       <div className="px-6 py-6">
         <span className="text-sm font-bold tracking-wide text-slate-800">
           DEPFIN FINANCE
