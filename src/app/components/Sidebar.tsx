@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -40,6 +41,12 @@ const MailIcon = (
   </svg>
 );
 
+const MessageIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/", icon: MonitorIcon },
   { label: "Personal Loans", href: "/personal-loans", icon: GridIcon },
@@ -49,7 +56,8 @@ const navItems: NavItem[] = [
   { label: "Mortage Loans", href: "/mortage-loans", icon: GridIcon },
   { label: "Approved Loans", href: "/approved-loans", icon: GridIcon },
   { label: "Declined Loans", href: "/declined-loans", icon: GridIcon },
-  { label: "Email", href: "/email", icon: MailIcon },
+  { label: "Messages", href: "/messages", icon: MessageIcon },
+  // { label: "Email", href: "/email", icon: MailIcon },
   { label: "Add New Admin", href: "/add-admin", icon: UserIcon },
 ];
 
@@ -61,10 +69,27 @@ const LogoutIcon = (
   </svg>
 );
 
+const CollapseIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <line x1="9" y1="3" x2="9" y2="21" />
+    <polyline points="16 9 13 12 16 15" />
+  </svg>
+);
+
+const ExpandIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <line x1="9" y1="3" x2="9" y2="21" />
+    <polyline points="13 9 16 12 13 15" />
+  </svg>
+);
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -72,31 +97,52 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
-      <div className="px-6 py-6">
-        <span className="text-sm font-bold tracking-wide text-slate-800">
-          DEPFIN FINANCE
-        </span>
+    <aside
+      className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-slate-200 bg-white transition-all duration-200 ${
+        collapsed ? "w-16" : "w-64"
+      }`}
+    >
+      <div className={`flex items-center py-6 ${collapsed ? "justify-center px-2" : "justify-between px-6"}`}>
+        {!collapsed && (
+          <span className="text-sm font-bold tracking-wide text-slate-800">
+            DEPFIN FINANCE
+          </span>
+        )}
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-800"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? ExpandIcon : CollapseIcon}
+        </button>
       </div>
 
       <div className="border-t border-slate-100" />
 
       <nav className="flex-1 overflow-y-auto px-3 py-5">
-        <p className="px-3 pb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Admin Layout Pages
-        </p>
+        {!collapsed && (
+          <p className="px-3 pb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Admin Layout Pages
+          </p>
+        )}
 
         <ul className="space-y-1">
           {navItems.map((item) => {
             const isActive =
               item.href === "/email"
                 ? pathname.startsWith("/email")
-                : pathname === item.href;
+                : item.href === "/messages"
+                  ? pathname.startsWith("/messages")
+                  : pathname === item.href;
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-semibold uppercase tracking-wide transition-colors ${
+                  title={collapsed ? item.label : undefined}
+                  className={`flex items-center gap-3 rounded-md py-2.5 text-[13px] font-semibold uppercase tracking-wide transition-colors ${
+                    collapsed ? "justify-center px-0" : "px-3"
+                  } ${
                     isActive
                       ? "text-sky-500"
                       : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
@@ -105,7 +151,7 @@ export default function Sidebar() {
                   <span className={isActive ? "text-sky-500" : "text-slate-400"}>
                     {item.icon}
                   </span>
-                  {item.label}
+                  {!collapsed && item.label}
                 </Link>
               </li>
             );
@@ -114,17 +160,20 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t border-slate-100 p-3">
-        {user?.email && (
+        {!collapsed && user?.email && (
           <p className="truncate px-3 pb-2 text-[11px] text-slate-400" title={user.email}>
             {user.email}
           </p>
         )}
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-semibold uppercase tracking-wide text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+          title={collapsed ? "Logout" : undefined}
+          className={`flex w-full items-center gap-3 rounded-md py-2.5 text-[13px] font-semibold uppercase tracking-wide text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 ${
+            collapsed ? "justify-center px-0" : "px-3"
+          }`}
         >
           <span className="text-slate-400">{LogoutIcon}</span>
-          Logout
+          {!collapsed && "Logout"}
         </button>
       </div>
     </aside>
